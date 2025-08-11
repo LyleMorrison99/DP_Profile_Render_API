@@ -33,9 +33,14 @@ def require_api_key(api_key: str = Depends(api_key_header)):
 # Create FastAPI app and enable CORS
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
+origins = [
+    "https://dynastypulse.com",  # Your WordPress site URL
+    # Add other allowed origins if needed
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://dynastypulse.com/"],  # <-- Change to specific domains in production!
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
