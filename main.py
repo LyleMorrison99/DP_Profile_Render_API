@@ -35,7 +35,7 @@ app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # <-- Change to specific domains in production!
+    allow_origins=["https://dynastypulse.com/"],  # <-- Change to specific domains in production!
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
