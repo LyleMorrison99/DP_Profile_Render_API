@@ -1,7 +1,7 @@
 import os, secrets
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine, text
 
 class Settings(BaseSettings):
