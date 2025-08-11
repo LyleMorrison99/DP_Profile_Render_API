@@ -50,7 +50,7 @@ def read_view(limit: int = 100, _=Depends(require_api_key)):
     try:
         with engine.connect() as conn:
             # Replace 'your_view_name' with your actual MySQL view name
-            q = text("SELECT * FROM your_view_name LIMIT :limit")
+            q = text("SELECT * FROM consolidated_rankings_site_view LIMIT :limit")
             result = conn.execute(q, {"limit": limit})
             rows = [dict(r._mapping) for r in result]
         return {"rows": rows}
