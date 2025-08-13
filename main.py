@@ -1,37 +1,36 @@
-import os
-import secrets
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import APIKeyHeader
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic_settings import BaseSettings
+from fastapi.security.api_key import APIKeyHeader
 from sqlalchemy import create_engine, text
-from fastapi.responses import JSONResponse
+from datetime import datetime, timedelta
+import os
 
-# Load settings from environment variables
-class Settings(BaseSettings):
-    DATABASE_URL: str
-    API_KEY: str
-    class Config:
-        env_file = ".env"  # local dev only
+# -------------------
+# Environment Variables
+# -------------------
+API_KEY = os.getenv("db5297c2-54a3-4d3a-9a3b-cf1b972d8e8f")
+DB_USER = os.getenv("ugopzqgagai7h")
+DB_PASSWORD = os.getenv("StankySushiBigMomma2025?")
+DB_HOST = os.getenv("giowm1136.siteground.biz")
+DB_NAME = os.getenv("dbhutvbrbdxm0c")
 
-settings = Settings()
+DATABASE_URL =mysql+pymysql://ugopzqgagai7h:StankySushiBigMomma2025?@giowm1136.siteground.biz:3306/dbhutvbrbdxm0c
+engine = create_engine(DATABASE_URL)
 
-# Create DB engine
-engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
-
-# API key header dependency
+# -------------------
+# API Key Security
+# -------------------
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=True)
 
 def require_api_key(api_key: str = Depends(api_key_header)):
-    if not secrets.compare_digest(api_key, settings.API_KEY):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid API Key"
-        )
-    return True
+    if api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return api_key
 
-# Create FastAPI app and enable CORS
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+# -------------------
+# App init + CORS
+# -------------------
+app = FastAPI()
 
 origins = [
     "https://dynastypulse.com",  # Your WordPress site URL
@@ -40,29 +39,47 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins= origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# -------------------
+# Cache: per limit value
+# -------------------
+cache_store = {}  # { limit: { "data": [...], "expiry": datetime } }
+
+# -------------------
+# Routes
+# -------------------
 @app.get("/health")
-def health():
+def health_check():
     return {"status": "ok"}
 
 @app.get("/view")
-def read_view(limit: int = 100, _=Depends(require_api_key)):
+def get_view(limit: int = 100, _=Depends(require_api_key)):
+    now = datetime.utcnow()
+
+    # Check cache for this limit
+    if limit in cache_store:
+        cache_entry = cache_store[limit]
+        if cache_entry["expiry"] > now:
+            return {"rows": cache_entry["data"], "cached": True}
+
     try:
         with engine.connect() as conn:
-            # Replace 'your_view_name' with your actual MySQL view name
-            q = text("SELECT * FROM consolidated_rankings_site_view LIMIT :limit")
-            result = conn.execute(q, {"limit": limit})
-            rows = [dict(r._mapping) for r in result]
-        return {"rows": rows}
+            query = text("SELECT * FROM consolidated_rankings_site_view LIMIT :limit")
+            result = conn.execute(query, {"limit": limit})
+            rows = [dict(row._mapping) for row in result]
+
+        # Store in cache
+        cache_store[limit] = {
+            "data": rows,
+            "expiry": now + timedelta(minutes=5)  # adjust cache time
+        }
+
+        return {"rows": rows, "cached": False}
+
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-@app.get("/")
-def root():
-    return {"message": "FastAPI running. Use /view with API key to get data."}
-
+        raise HTTPException(status_code=500, detail=str(e))
