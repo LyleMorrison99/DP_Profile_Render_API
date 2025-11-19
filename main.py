@@ -31,7 +31,11 @@ def require_api_key(api_key: str = Depends(api_key_header)):
     return True
 
 # ===== CORS =====
-app = FastAPI()
+app = FastAPI(
+    title="API Docs",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json")
 origins = [
     "https://dynastypulse.com",  # Your WordPress site URL
     # Add other allowed origins if needed
