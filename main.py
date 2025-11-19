@@ -49,10 +49,10 @@ app.add_middleware(
 cache_data = None
 cache_expiry = None
 
-def fetch_view_data(limit: int):
+def fetch_view_data(player_name_key: varchar):
     """Pull fresh data from the MySQL view."""
     with engine.connect() as conn:
-        q = text("SELECT * FROM site_profile_view WHERE player_name_key = :pid LIMIT1 ")
+        q = text("SELECT * FROM site_profile_view WHERE player_name_key = :pid LIMIT 1 ")
         result = conn.execute(q, {"pid": player_name_key}).fetchone()
 
         if not result:
