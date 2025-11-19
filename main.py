@@ -31,7 +31,7 @@ def require_api_key(api_key: str = Depends(api_key_header)):
     return True
 
 # ===== CORS =====
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI()
 origins = [
     "https://dynastypulse.com",  # Your WordPress site URL
     # Add other allowed origins if needed
@@ -52,8 +52,12 @@ cache_expiry = None
 def fetch_view_data(limit: int):
     """Pull fresh data from the MySQL view."""
     with engine.connect() as conn:
-        q = text("SELECT * FROM site_profile_view LIMIT :limit")
-        result = conn.execute(q, {"limit": limit})
+        q = text("SELECT * FROM site_profile_view WHERE player_name_key = :pid LIMIT1 ")
+        result = conn.execute(q, {"pid": player_name_key}).fetchone()
+
+        if not result:
+                raise HTTPException(status_code=404, detail="Player not found")
+        
         return [dict(r._mapping) for r in result]
 
 def get_cached_data(limit: int):
