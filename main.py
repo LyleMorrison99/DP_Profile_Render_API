@@ -49,8 +49,9 @@ app.add_middleware(
 cache_data = None
 cache_expiry = None
 
-def fetch_view_data(player_name_key: str):
-    """Pull fresh data from the MySQL view."""
+@app.get("/player/{player_name_key}")
+def get_player(player_name_key: str):
+    """get single player record by player_name_key"""
     with engine.connect() as conn:
         q = text("SELECT * FROM site_profile_view WHERE player_name_key = :pid LIMIT 1 ")
         result = conn.execute(q, {"pid": player_name_key}).fetchone()
@@ -58,7 +59,7 @@ def fetch_view_data(player_name_key: str):
         if not result:
                 raise HTTPException(status_code=404, detail="Player not found")
         
-        return [dict(r._mapping) for r in result]
+        return dict(result._mapping)
 
 #def get_cached_data(limit: int):
 #    """Return cached data if valid, else refresh."""
@@ -92,7 +93,8 @@ def health():
 #    except Exception as e:
 #        return JSONResponse(status_code=500, content={"error": str(e)})
 
+# ---- Optional Root (Protected)
 @app.get("/")
-def root():
-    return {"message": "FastAPI running. Use /view with API key to get data."}
+def root(_=Depends(require_api_key)):
+    return {"message": "API OK — see /docs for API documentation"}
 
