@@ -60,37 +60,37 @@ def fetch_view_data(player_name_key: str):
         
         return [dict(r._mapping) for r in result]
 
-def get_cached_data(limit: int):
-    """Return cached data if valid, else refresh."""
-    global cache_data, cache_expiry
-    now = datetime.utcnow()
-    if cache_data and cache_expiry and now < cache_expiry:
-        return cache_data
-    data = fetch_view_data(limit)
-    cache_data = data
-    cache_expiry = now + timedelta(seconds=settings.CACHE_TTL)
-    return data
+#def get_cached_data(limit: int):
+#    """Return cached data if valid, else refresh."""
+#    global cache_data, cache_expiry
+#    now = datetime.utcnow()
+#    if cache_data and cache_expiry and now < cache_expiry:
+#        return cache_data
+#    data = fetch_view_data(limit)
+#    cache_data = data
+#    cache_expiry = now + timedelta(seconds=settings.CACHE_TTL)
+#    return data
 
 # ===== STARTUP PRE-CACHE =====
 @app.on_event("startup")
-def preload_cache():
-    global cache_data, cache_expiry
-    cache_data = fetch_view_data(100)  # Preload with 100 rows
-    cache_expiry = datetime.utcnow() + timedelta(seconds=settings.CACHE_TTL)
-    print(f"[CACHE] Preloaded {len(cache_data)} rows at startup.")
+#def preload_cache():
+#    global cache_data, cache_expiry
+#    cache_data = fetch_view_data(100)  # Preload with 100 rows
+#    cache_expiry = datetime.utcnow() + timedelta(seconds=settings.CACHE_TTL)
+#    print(f"[CACHE] Preloaded {len(cache_data)} rows at startup.")
 
 # ===== ROUTES =====
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
-@app.get("/view")
-def read_view(limit: int = 100, _=Depends(require_api_key)):
-    try:
-        rows = get_cached_data(limit)
-        return {"rows": rows[:limit]}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+#@app.get("/view")
+#def read_view(limit: int = 100, _=Depends(require_api_key)):
+#    try:
+#        rows = get_cached_data(limit)
+#        return {"rows": rows[:limit]}
+#    except Exception as e:
+#        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/")
 def root():
