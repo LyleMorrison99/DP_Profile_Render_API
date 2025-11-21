@@ -53,12 +53,12 @@ app.add_middleware(
 cache_data = None
 cache_expiry = None
 
-@app.get("/player/{slug}")
-def get_player(slug: str):
-    """get single player record by player_name_key"""
+@app.get("/player/{term_id}")
+def get_player(term_id: int):
+    """get single player record by term_id"""
     with engine.connect() as conn:
-        q = text("SELECT * FROM site_profile_view WHERE slug = :slug LIMIT 1 ")
-        result = conn.execute(q, {"slug": slug}).fetchone()
+        q = text("SELECT * FROM site_profile_view WHERE term_id = :term_id LIMIT 1 ")
+        result = conn.execute(q, {"term_id": term_id}).fetchone()
 
         if not result:
                 raise HTTPException(status_code=404, detail="Player not found")
